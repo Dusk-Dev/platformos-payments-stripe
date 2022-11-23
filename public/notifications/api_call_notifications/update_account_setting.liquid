@@ -1,0 +1,16 @@
+---
+name: update_account_setting
+to: https://api.stripe.com/v1/accounts/{{ data.account_id }}
+enabled: true
+format: https
+trigger_condition: true
+request_type: Post
+callback:
+headers: >
+  {%- include 'modules/stripe/shared/api_credentials' -%}
+  {
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Authorization": "Bearer {{ context.exports.payments.gateway.secret_key  }}"
+  }
+---
+settings[payouts][schedule][interval]=manual
