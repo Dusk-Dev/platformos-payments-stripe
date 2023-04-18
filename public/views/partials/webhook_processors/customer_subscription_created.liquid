@@ -1,0 +1,39 @@
+{%log data, type: "webhook sub created data"%}
+
+{%liquid
+  graphql su = 'modules/payments/get_subscription_by_gateway_id', gateway_id: data.id
+  assign currentSub = su.customizations.results.first
+
+  if currentSub != blank
+    function result = "api/orders/error_response", error: "You are already subscribed to a plan"
+    return result
+  endif
+%}
+
+
+{% comment %}
+  
+
+{%- assign now = 'now' | to_time | strftime: "%d-%m-%Y %H:%M:%S"  -%}
+
+{% graphql create = 'modules/payments/create_subscription',
+  gateway_id: data.id,
+  credit_card_id: data.default_payment_method,
+  description: data.description,
+  customer_id: data.customer,
+  paid_at: now,
+  collection_method: data.collection_method,
+  external_id: data.external_id,
+  start_date: data.start_date,
+  status: data.status,
+  latest_invoice: data.latest_invoice,
+  cancel_at_period_end: data.cancel_at_period_end,
+  plan_id: data.plan.id,
+  interval: data.plan.interval,
+  product_id: data.plan.product,
+  cancel_at: data.cancel_at,
+  canceled_at: data.canceled_at
+%}
+
+{%log create, type: "created graphql"%}
+{% endcomment %}

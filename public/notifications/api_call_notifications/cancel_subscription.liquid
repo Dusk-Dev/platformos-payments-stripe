@@ -1,0 +1,25 @@
+---
+name: cancel_subscription
+to: https://api.stripe.com/v1/subscriptions/{{ data.subscription_id }}
+enabled: true
+format: https
+trigger_condition: true
+request_type: Post
+callback: >
+  {%- assign response_data = response.body | to_hash -%}
+  {%log response_data, type: "response data"%}
+  {% if response_data.error %}
+    {%- log response_data.error, type: 'modules/payments/cancel_subscription' -%}
+  {% endif %}
+headers: >
+  {% if data %}
+    {%- include 'modules/stripe/shared/api_credentials' -%}
+    {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization": "Bearer {{ context.exports.payments.gateway.secret_key }}",
+      "Idempotency-Key": "{{ data.indempotency_key }}"
+    }
+  {% endif %}
+---
+{% log data, type: "data" %}
+cancel_at_period_end=true

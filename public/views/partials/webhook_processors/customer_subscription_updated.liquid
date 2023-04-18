@@ -1,0 +1,30 @@
+{%log data, type: "webhook sub updated data"%}
+
+{% comment %}
+  Update current subscription data
+{% endcomment %}
+
+{%liquid
+  graphql su = 'modules/payments/get_subscription_by_gateway_id', gateway_id: data.id
+  assign currentSub = su.customizations.results.first
+
+  if currentSub == blank
+    log "Subscription not found", type: "error"
+    function result = "api/orders/error_response", error: "You are not subscribed to any plan."
+    return result
+  endif
+%}
+
+{%log data, type: "data"%}
+
+{% graphql update = 'modules/payments/update_subscription',
+  id: currentSub.id,
+  cancel_at_period_end: data.cancel_at_period_end,
+  cancel_at: data.cancel_at,
+  canceled_at: data.canceled_at,
+  status: data.status
+%}
+{%log update%}
+
+  
+

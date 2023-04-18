@@ -1,0 +1,25 @@
+---
+name: create_billing_session
+to: https://api.stripe.com/v1/billing_portal/sessions
+enabled: true
+format: https
+trigger_condition: true
+request_type: Post
+callback: >
+  {%- assign response_data = response.body | to_hash -%}
+  {%log response_data, type: "response data"%}
+  {% if response_data.error %}
+    {%- log response_data.error, type: 'modules/payments/create_subscription' -%}
+  {% endif %}
+headers: >
+  {% if data %}
+    {%- include 'modules/stripe/shared/api_credentials' -%}
+    {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization": "Bearer {{ context.exports.payments.gateway.secret_key }}",
+      "Idempotency-Key": "{{ data.indempotency_key }}"
+    }
+  {% endif %}
+---
+{% log data, type: "data" %}
+customer={{ data.customer_id }}&return_url={{ data.return_url }}

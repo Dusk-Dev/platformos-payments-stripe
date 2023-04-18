@@ -1,0 +1,64 @@
+{%log gateway_response, type: "gateway response"%}
+
+{%- parse_json 'response_body' -%}
+  {{ gateway_response.body }}
+{%- endparse_json -%}
+
+{%log response_body, type: "response body"%}
+{%log data, type: "data???"%}
+
+{%- if gateway_response.status == 200 -%}
+
+  {%- assign now = 'now' | to_time | strftime: "%d-%m-%Y %H:%M:%S"  -%}
+  {
+    {%- if response_body.error -%}
+      "errors": [
+        {"message": "{{ response_body.error.message }}"}
+      ],
+    {%- endif -%}
+
+    {%graphql g, id: data.external_id %}
+        mutation update_fee(
+          $id: ID!
+        ) {
+          user_update(
+            id: $id
+            user: {
+              properties: [
+                { name: "mpo_fee_percent", value_float: 5.0 }
+                { name: "is_premium", value_boolean: true }
+              ]
+            }
+          ) {
+            id
+          }
+        }
+      {%endgraphql%}
+
+      {%log g, type: "User update"%}
+
+
+    "properties": [
+      { "name": "gateway_id", "value": "{{ response_body.id }}" },
+      { "name": "credit_card_id", "value": "{{ response_body.default_payment_method }}" },
+      { "name": "description", "value": "{{ response_body.description }}" },
+      { "name": "customer_id", "value": "{{ response_body.customer }}" },
+      { "name": "paid_at", "value": "{{ now }}" },
+      { "name": "collection_method", "value": "{{ response_body.collection_method }}" },
+      { "name": "external_id", "value": "{{ data.external_id }}" },
+      { "name": "start_date", "value": "{{ response_body.start_date }}" },
+      { "name": "status", "value": "{{ response_body.status }}" },
+      { "name": "latest_invoice", "value": "{{ response_body.latest_invoice }}" },
+      { "name": "cancel_at_period_end", "value": "{{ response_body.cancel_at_period_end }}" },
+      { "name": "plan_id", "value": "{{ response_body.plan.id }}" },
+      { "name": "interval", "value": "{{ response_body.plan.interval }}" },
+      { "name": "product_id", "value": "{{ response_body.plan.product }}" },
+      { "name": "cancel_at", "value": "{{ response_body.cancel_at }}" },
+      { "name": "canceled_at", "value": "{{ response_body.canceled_at }}" }
+    ]
+  }
+{%- else -%}
+  {
+    "errors": {{ response_body.error.message | json }}
+  }
+{%- endif -%}
