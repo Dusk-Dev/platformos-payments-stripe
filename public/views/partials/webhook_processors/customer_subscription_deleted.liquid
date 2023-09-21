@@ -1,4 +1,4 @@
-{%log data, type: "webhook sub deleted data"%}
+{% log data, type: "webhook sub deleted data" %}
 
 {% comment %}
   Update current subscription data
@@ -16,16 +16,21 @@
 
 {% assign default_mpo = context.constants.mpo_fee_percent | divided_by: 1.0 %}
 
-{% graphql g, id: data.external_id %}
+{% comment %}
+  Update user's mpo fee percent and premium tier
+{% endcomment %}
+
+{% graphql g, id: currentSub.properties.external_id, default_mpo: default_mpo %}
   mutation update_fee(
     $id: ID!
+    $default_mpo: Float!
   ) {
     user_update(
       id: $id
       user: {
         properties: [
-          { name: "mpo_fee_percent", value_float: {{ default_mpo }} }
-          { name: "is_premium", value_boolean: false }
+          { name: "mpo_fee_percent", value_float: $default_mpo }
+          { name: "premium_tier", value: null }
         ]
       }
     ) {
@@ -34,12 +39,13 @@
   }
 {% endgraphql %}
 
+{% log g, type: 'delete user sub' %}
+
 {% graphql update = 'modules/payments/update_subscription',
   id: currentSub.id,
   cancel_at_period_end: data.cancel_at_period_end,
   cancel_at: data.cancel_at,
-  canceled_at: data.canceled_at
+  canceled_at: data.canceled_at,
+  status: data.status,
 %}
-{%log update%}
-
-
+{% log update %}

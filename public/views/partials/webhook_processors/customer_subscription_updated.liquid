@@ -1,4 +1,4 @@
-{%log data, type: "webhook sub updated data"%}
+{% log data, type: "webhook sub updated data" %}
 
 {% comment %}
   Update current subscription data
@@ -15,7 +15,7 @@
   endif
 %}
 
-{%log data, type: "data"%}
+{% log data, type: "data" %}
 
 {% graphql update = 'modules/payments/update_subscription',
   id: currentSub.id,
@@ -24,7 +24,6 @@
   canceled_at: data.canceled_at,
   status: data.status
 %}
-{%log update%}
+{% log update %}
 
   
-

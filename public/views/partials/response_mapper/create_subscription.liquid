@@ -1,15 +1,25 @@
-{%log gateway_response, type: "gateway response"%}
-
 {%- parse_json 'response_body' -%}
   {{ gateway_response.body }}
 {%- endparse_json -%}
 
-{%log response_body, type: "response body"%}
-{%log data, type: "data???"%}
+{% log response_body, type: "create sub response body" %}
+{% log data, type: "create subscription data" %}
+
+{% assign price_id = data.price_id %}
+
+{% graphql sub_tier = 'modules/payments/subscription_tier/get_sub_tier_by_price_id', price_id: price_id | dig: 'records', 'results' | first %}
+
+{% if sub_tier == blank %}
+  {
+    "errors": [
+      {"message": "No subscription tier found for price id {{ price_id }}"}
+    ]
+  }
+{% endif %}
 
 {%- if gateway_response.status == 200 -%}
 
-  {%- assign now = 'now' | to_time | strftime: "%d-%m-%Y %H:%M:%S"  -%}
+  {%- assign now = 'now' | to_time | strftime: "%d-%m-%Y %H:%M:%S" -%}
   {
     {%- if response_body.error -%}
       "errors": [
@@ -17,25 +27,27 @@
       ],
     {%- endif -%}
 
-    {%graphql g, id: data.external_id %}
-        mutation update_fee(
+    {% graphql user_mutation, id: data.external_id, fee: sub_tier.fee, tier: sub_tier.abrv %}
+        mutation update_user(
           $id: ID!
+          $fee: Float!
+          $tier: String!
         ) {
           user_update(
             id: $id
             user: {
               properties: [
-                { name: "mpo_fee_percent", value_float: 5.0 }
-                { name: "is_premium", value_boolean: true }
+                { name: "mpo_fee_percent", value_float: $fee }
+                { name: "premium_tier", value: $tier }
               ]
             }
           ) {
             id
           }
         }
-      {%endgraphql%}
+    {% endgraphql %}
 
-      {%log g, type: "User update"%}
+    {% log user_mutation, type: "User update" %}
 
 
     "properties": [
