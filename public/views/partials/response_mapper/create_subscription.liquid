@@ -5,6 +5,10 @@
 {% log response_body, type: "create sub response body" %}
 {% log data, type: "create subscription data" %}
 
+{% assign sub_item_id = response_body.items.data[0].id %}
+
+{% log sub_item_id %}
+
 {% assign price_id = data.price_id %}
 
 {% graphql sub_tier = 'modules/payments/subscription_tier/get_sub_tier_by_price_id', price_id: price_id | dig: 'records', 'results' | first %}
@@ -66,7 +70,8 @@
       { "name": "interval", "value": "{{ response_body.plan.interval }}" },
       { "name": "product_id", "value": "{{ response_body.plan.product }}" },
       { "name": "cancel_at", "value": "{{ response_body.cancel_at }}" },
-      { "name": "canceled_at", "value": "{{ response_body.canceled_at }}" }
+      { "name": "canceled_at", "value": "{{ response_body.canceled_at }}" },
+      { "name": "sub_item_id", "value": "{{ sub_item_id }}" }
     ]
   }
 {%- else -%}

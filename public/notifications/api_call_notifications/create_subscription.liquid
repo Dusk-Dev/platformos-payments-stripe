@@ -7,7 +7,7 @@ trigger_condition: true
 request_type: Post
 callback: >
   {%- assign response_data = response.body | to_hash -%}
-  {%log response_data, type: "response data"%}
+  {% log response_data, type: "response data" %}
   {% if response_data.error %}
     {%- log response_data.error, type: 'modules/payments/create_subscription' -%}
   {% endif %}
@@ -22,4 +22,4 @@ headers: >
   {% endif %}
 ---
 {% log data, type: "data" %}
-customer={{ data.customer_id }}&items[0][price]={{ data.price_id }}&default_payment_method={{ data.default_payment_method  }}&currency={{ data.currency }}
+customer={{ data.customer_id }}&items[0][price]={{ data.price_id }}&default_payment_method={{ data.default_payment_method }}&currency={{ data.currency }}
