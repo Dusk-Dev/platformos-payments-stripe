@@ -13,17 +13,48 @@
     function result = "api/orders/error_response", error: "You are not subscribed to any plan."
     return result
   endif
-%}
 
-{% log data, type: "data" %}
+  assign plan_id = data.plan.id
+  assign interval = data.plan.interval
+  assign sub_item_id = data.items.data[0].id
+
+
+  graphql sub_tier = 'modules/payments/subscription_tier/get_sub_tier_by_price_id', price_id: plan_id | dig: 'records', 'results' | first
+
+  assign tier = sub_tier.abrv
+  assign fee = sub_tier.fee
+%}
 
 {% graphql update = 'modules/payments/update_subscription',
   id: currentSub.id,
   cancel_at_period_end: data.cancel_at_period_end,
   cancel_at: data.cancel_at,
   canceled_at: data.canceled_at,
-  status: data.status
+  status: data.status,
+  plan_id: plan_id,
+  interval: interval,
+  sub_item_id: sub_item_id
 %}
-{% log update %}
+{% log update, type: 'Subscription update webhook graphql result' %}
 
-  
+{% graphql g, id: currentSub.properties.external_id, tier: tier, fee: fee %}
+  mutation update_fee(
+    $id: ID!
+    $tier: String!
+    $fee: Float!
+  ) {
+    user_update(
+      id: $id
+      user: {
+        properties: [
+          { name: "mpo_fee_percent", value_float: $fee}
+          { name: "premium_tier", value: $tier }
+        ]
+      }
+    ) {
+      id
+    }
+  }
+{% endgraphql %}
+
+{% log g, type: 'Update user fee and tier' %}
