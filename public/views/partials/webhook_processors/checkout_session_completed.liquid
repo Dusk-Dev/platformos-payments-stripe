@@ -1,1 +1,54 @@
-{%log data, type: "checkout session completed"%}
+{% log data, type: "checkout session completed" %}
+
+
+{% graphql payment_links, gateway_id: data.payment_link %}
+  query ($gateway_id: String!) {
+    customizations(
+      per_page: 1
+      name: "modules/payments/payment_link"
+      is_deleted: false
+      properties: [
+        { name: "gateway_id", value: $gateway_id }
+      ]
+    ) {
+      results {
+        id
+        external_id: property(name: "external_id")
+      }
+    }
+  }
+{% endgraphql %}
+
+{% assign payment_link = payment_links.customizations.results | first %}
+
+{% log payment_link %}
+
+{% assign studio_id = payment_link.external_id %}
+
+{% if studio_id != blank %}
+
+  {% assign now = 'now' | strftime: '%FT%T%z' %}
+  
+  {% graphql _updated_studio, id: studio_id, paid_at: now %}
+    mutation(
+      $id: String!
+      $paid_at: String!
+    ) {
+    record: record_update(
+      id: $id
+      record: {
+        table: "studio"
+        properties: [
+          { name: "paid_at" value: $paid_at }
+        ]
+      }
+    ){
+      id
+      paid_at: property(name: "paid_at")
+    }
+  }
+  {% endgraphql %}
+
+  {% log _updated_studio, type: '_updated_studio' %}
+
+{% endif %}

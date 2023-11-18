@@ -11,7 +11,7 @@
       { "name": "state", "value": "{{ account_state }}" },
       { "name": "data", "value": "{{ response_body | json | replace: '"', '\"' }}" },
       { "name": "last_error", "value": "{{ response_body.error | json | replace: '"', '\"' }}"},
-      { "name": "last_errors", "value": "{{ response_body.errors | json | replace: '"', '\"'  }}"},
+      { "name": "last_errors", "value": "{{ response_body.errors | json | replace: '"', '\"' }}"},
       { "name": "queued", "value": "false" }
     ]
   }
@@ -19,13 +19,13 @@
   {
     "id": "{{ data.id }}",
     "properties": [
-      { "name": "last_error", "value": "{{ response_body.error | json | replace: '"', '\"'  }}"},
+      { "name": "last_error", "value": "{{ response_body.error | json | replace: '"', '\"' }}"},
       { "name": "last_errors", "value": "{{ response_body.errors | json | replace: '"', '\"' }}"},
       { "name": "queued", "value": "false" }
     ]
   }
 {% else %}
   {
-    "errors": {{ response_body.error.message | json  }}
+    "errors": {{ response_body.error.message | json }}
   }
 {%- endif -%}
